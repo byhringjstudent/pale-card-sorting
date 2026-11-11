@@ -95,6 +95,79 @@ export default function StudiesPage() {
     });
   };
 
+
+  async function handleDeleteStudy(studyId: string, studyName: string) {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete "${studyName}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `/api/studies/${encodeURIComponent(studyId)}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete study");
+      }
+
+      window.location.reload();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Deletion failed"
+      );
+    }
+  }
+
+  async function handleResetResponses(
+    studyId: string,
+    studyName: string
+  ) {
+    const confirmation = window.prompt(
+      `Permanently delete all responses for "${studyName}"?\n\n` +
+      `Type the exact study name to confirm:`
+    );
+
+    if (confirmation === null) return;
+
+    if (confirmation !== studyName) {
+      window.alert("Study name did not match. Reset cancelled.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/studies/${encodeURIComponent(studyId)}/reset-responses`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            confirmStudyName: studyName,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Reset failed");
+      }
+
+      window.alert(
+        `Reset complete: ${data.deletedResponses} session(s) removed.`
+      );
+
+      window.location.reload();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Reset failed"
+      );
+    }
+  }
+
   return (
     <TooltipProvider>
       <div className="space-y-6">
@@ -293,7 +366,14 @@ export default function StudiesPage() {
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-destructive">
+                              <DropdownMenuItem
+                                onSelect={() =>
+                                  handleResetResponses(study.id, study.name)
+                                }
+                              >
+                                Reset Responses
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onSelect={() => handleDeleteStudy(study.id, study.name)}>
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>
