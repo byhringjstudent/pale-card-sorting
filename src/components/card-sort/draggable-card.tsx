@@ -35,6 +35,7 @@ interface DraggableCardProps {
 export const DraggableCard = forwardRef<HTMLDivElement, DraggableCardProps>(
   ({ card, containerId, isDragging: externalIsDragging, isOverlay }, ref) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
     
     const { categories, moveCard, getContainerName, announce } = useCardSortStore();
@@ -160,11 +161,37 @@ export const DraggableCard = forwardRef<HTMLDivElement, DraggableCardProps>(
 
           {/* Card Content */}
           <div className="flex-grow min-w-0">
-            <p className="font-medium text-foreground truncate">{card.label}</p>
+            <p className="font-medium text-foreground break-words">
+              {card.label}
+            </p>
             {card.description && (
-              <p className="text-sm text-muted-foreground truncate mt-0.5">
-                {card.description}
-              </p>
+              <div className="mt-1">
+                <p
+                  id={`card-description-${card.id}`}
+                  className={cn(
+                    'text-sm text-muted-foreground break-words',
+                    !isDescriptionExpanded && 'line-clamp-1'
+                  )}
+                >
+                  {card.description}
+                </p>
+                <button
+                  type="button"
+                  aria-expanded={isDescriptionExpanded}
+                  aria-controls={`card-description-${card.id}`}
+                  className="mt-2 rounded text-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setIsDescriptionExpanded((value) => !value);
+                  }}
+                >
+                  {isDescriptionExpanded
+                    ? 'Show less'
+                    : 'Show full description'}
+                </button>
+              </div>
             )}
           </div>
 
